@@ -171,7 +171,7 @@
           results.data.forEach(row => {
             if (row.lat && row.lng) {
               new mapboxgl.Marker({ color: '#00a8ff' })
-                .setLngLat([parseFloat(row.lng), parseFloat(row.lat)])
+                .setLngLat([parseFloat(row.Lat || row.lat), parseFloat(row.Lng || row.lng)])
                 .setPopup(new mapboxgl.Popup().setHTML(
                   `<strong>${row.nombre}</strong><br>
                    Folio: ${row.folio_cliente}<br>
