@@ -7,14 +7,32 @@
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.css" rel="stylesheet" />
   <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    body { font-family: 'Poppins', sans-serif; margin: 0; background-color: #f5f6fa; }
-    #map { width: 100%; height: 100vh; }
-    .navbar { background-color: #1a1a1a; }
-    .navbar-brand { color: #00ff75 !important; }
-    #map-style { position:absolute;top:10px;left:10px;z-index:10;width:150px; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f5f6fa;
+      margin: 0;
+    }
+    #map {
+      width: 100%;
+      height: 100vh;
+    }
+    .navbar {
+      background-color: #1a1a1a;
+    }
+    .navbar-brand {
+      color: #00ff75 !important;
+    }
+    #map-style {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 10;
+      width: 160px;
+    }
   </style>
 </head>
 <body>
+
   <nav class="navbar navbar-dark">
     <a class="navbar-brand" href="ind1.html">← Volver al Panel</a>
   </nav>
@@ -26,13 +44,16 @@
     <option value="dark">Dark</option>
     <option value="outdoors">Outdoors</option>
   </select>
+
   <div id="map"></div>
 
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
   <script>
+    // Mapbox token
     mapboxgl.accessToken = 'pk.eyJ1IjoibWFycXVpbmhvIiwiYSI6ImNsbncydDkzNjA0MDEycWp5Y2hsZzNiZHoifQ.dUzSeWKWWe7R36yohDNb0g';
 
+    // Crear mapa
     const map = new mapboxgl.Map({
       container: 'map',
       style: 'mapbox://styles/mapbox/streets-v11',
@@ -40,6 +61,7 @@
       zoom: 11
     });
 
+    // Estilos de mapa
     document.getElementById('map-style').addEventListener('change', function () {
       const styles = {
         streets: 'mapbox://styles/mapbox/streets-v11',
@@ -51,6 +73,7 @@
       map.setStyle(styles[this.value]);
     });
 
+    // Edificios 3D al cargar
     map.on('load', () => {
       const layers = map.getStyle().layers;
       let labelLayerId;
@@ -62,13 +85,13 @@
       }
 
       map.addLayer({
-        'id': '3d-buildings',
-        'source': 'composite',
+        id: '3d-buildings',
+        source: 'composite',
         'source-layer': 'building',
-        'filter': ['==', 'extrude', 'true'],
-        'type': 'fill-extrusion',
-        'minzoom': 15,
-        'paint': {
+        filter: ['==', 'extrude', 'true'],
+        type: 'fill-extrusion',
+        minzoom: 15,
+        paint: {
           'fill-extrusion-color': '#aaa',
           'fill-extrusion-height': ['interpolate', ['linear'], ['zoom'], 15, 0, 15.05, ['get', 'height']],
           'fill-extrusion-base': ['interpolate', ['linear'], ['zoom'], 15, 0, 15.05, ['get', 'min_height']],
@@ -77,28 +100,29 @@
       }, labelLayerId);
     });
 
-    // Cargar el CSV de comercios
+    // Cargar CSV desde carpeta /data/
     Papa.parse("data/comerciosgeos.csv", {
       download: true,
       header: true,
       complete: function(results) {
         results.data.forEach(row => {
-          const lat = parseFloat(row.Lat || row.lat);
-          const lng = parseFloat(row.Lng || row.lng);
+          const lat = parseFloat(row.latitud);
+          const lng = parseFloat(row.longitud);
           if (!isNaN(lat) && !isNaN(lng)) {
             new mapboxgl.Marker({ color: '#00a8ff' })
               .setLngLat([lng, lat])
               .setPopup(new mapboxgl.Popup().setHTML(`
-                <strong>${row.nombre || 'Sin nombre'}</strong><br>
-                Folio: ${row.folio_cliente || '-'}<br>
-                Municipio: ${row.municipio || '-'}<br>
-                Estado: ${row.estado || '-'}<br>
-                Teléfono: ${row.telefono || '-'}`))
+                <strong>${row.comercio || 'Sin nombre'}</strong><br>
+                Giro: ${row.giro || '-'}<br>
+                Latitud: ${lat}<br>
+                Longitud: ${lng}
+              `))
               .addTo(map);
           }
         });
       }
     });
   </script>
+
 </body>
 </html>
