@@ -51,8 +51,9 @@
       header: true,
       complete: function(results) {
         results.data.forEach(row => {
-          const lat = parseFloat(row.lat);
-          const lng = parseFloat(row.lng);
+          const lat = parseFloat(row.Lat || row.lat);
+const lng = parseFloat(row.Lng || row.lng);
+
           if (!isNaN(lat) && !isNaN(lng)) {
             new mapboxgl.Marker({ color: '#00a8ff' })
               .setLngLat([lng, lat])
