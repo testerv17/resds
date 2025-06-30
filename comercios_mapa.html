@@ -25,16 +25,19 @@
     #map-style {
       position: absolute;
       top: 10px;
-      left: 10px;
+      right: 10px;
       z-index: 10;
       width: 160px;
     }
     .custom-marker {
-  border-radius: 50%;
-  box-shadow: 0 0 4px rgba(0,0,0,0.5);
-  cursor: pointer;
-}
-
+      background-image: url('waste.png');
+      background-size: cover;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -43,9 +46,7 @@
     <a class="navbar-brand" href="ind1.html">← Volver al Panel</a>
   </nav>
 
-  <select id="map-style" class="form-control" style="position:absolute; top:60px; left:10px; z-index:10; width:160px;">
-
-
+  <select id="map-style" class="form-control">
     <option value="streets">Streets</option>
     <option value="satellite">Satellite</option>
     <option value="light">Light</option>
@@ -58,10 +59,8 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
   <script>
-    // Mapbox token
     mapboxgl.accessToken = 'pk.eyJ1IjoibWFycXVpbmhvIiwiYSI6ImNsbncydDkzNjA0MDEycWp5Y2hsZzNiZHoifQ.dUzSeWKWWe7R36yohDNb0g';
 
-    // Crear mapa
     const map = new mapboxgl.Map({
       container: 'map',
       style: 'mapbox://styles/mapbox/streets-v11',
@@ -69,7 +68,6 @@
       zoom: 11
     });
 
-    // Estilos de mapa
     document.getElementById('map-style').addEventListener('change', function () {
       const styles = {
         streets: 'mapbox://styles/mapbox/streets-v11',
@@ -81,7 +79,6 @@
       map.setStyle(styles[this.value]);
     });
 
-    // Edificios 3D al cargar
     map.on('load', () => {
       const layers = map.getStyle().layers;
       let labelLayerId;
@@ -108,7 +105,7 @@
       }, labelLayerId);
     });
 
-    // Cargar CSV desde carpeta /data/
+    // Cargar ubicaciones del CSV
     Papa.parse("data/comerciosgeos.csv", {
       download: true,
       header: true,
@@ -118,12 +115,9 @@
           const lng = parseFloat(row.longitud);
           if (!isNaN(lat) && !isNaN(lng)) {
             const el = document.createElement('div');
-el.className = 'custom-marker';
-el.style.backgroundImage = 'url(waste.png)';
-el.style.width = '32px';
-el.style.height = '32px';
-el.style.backgroundSize = 'cover';
-            new mapboxgl.Marker({ color: '#00a8ff' })
+            el.className = 'custom-marker';
+
+            new mapboxgl.Marker(el)
               .setLngLat([lng, lat])
               .setPopup(new mapboxgl.Popup().setHTML(`
                 <strong>${row.comercio || 'Sin nombre'}</strong><br>
