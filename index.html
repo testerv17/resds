@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Daños en las Calles</title>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.css" rel="stylesheet" />
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css" rel="stylesheet">
+
+    <style>
+        /* From Uiverse.io by Tiagoadag */
+        .card {
+            width: 190px;
+            height: 254px;
+            background-image: linear-gradient(163deg, #00ff75 0%, #3700ff 100%);
+            border-radius: 20px;
+            transition: all 0.3s;
+            margin: 20px auto;
+        }
+
+        .card2 {
+            width: 190px;
+            height: 254px;
+            background-color: #1a1a1a;
+            border-radius: 20px;
+            transition: all 0.2s;
+            margin: 20px auto;
+        }
+
+        .card2:hover {
+            transform: scale(0.98);
+            border-radius: 20px;
+        }
+
+        .card:hover {
+            box-shadow: 0px 0px 30px 1px rgba(0, 255, 117, 0.30);
+        }
+
+        /* Main page layout and styles */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #2f3640;
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container-fluid {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 56px);
+            width: 100vw;
+        }
+
+        .map-row {
+            display: flex;
+            flex: 2;
+            justify-content: center;
+            align-items: stretch;
+            background-color: #2f3640;
+        }
+
+        @media (min-width: 768px) {
+            .map-row {
+                flex-direction: row;
+            }
+        }
+
+        .side-panel {
+            background-color: #1a1a1a;
+            color: #fff;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .map-column {
+            flex: 3;
+            background-color: #fff;
+            height: 100%;
+            position: relative;
+        }
+
+        #map-style {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1;
+            width: 150px;
+            background-color: #1a1a1a;
+            color: #fff;
+            border: 1px solid #fff;
+            border-radius: 10px;
+            padding: 5px;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+
+        .dashboard {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            padding: 10px;
+            background-color: #1a1a1a;
+        }
+
+        .dashboard h3 {
+            color: #00ff75;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .graph {
+            height: 180px;
+            margin-bottom: 15px;
+        }
+
+        .graph canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .datatable-row {
+            flex: 1;
+            background-color: #343a40;
+            color: #fff;
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        .datatable-row h3 {
+            color: #00ff75;
+        }
+
+        /* DataTable Custom Style */
+        table.dataTable thead {
+            background-color: #00ff75;
+            color: #525151;
+        }
+
+        table.dataTable {
+            width: 100% !important;
+        }
+
+        table.dataTable tbody {
+            background-color: #1a1a1a;
+            color: #4d4d4d;
+        }
+
+        .dataTables_wrapper {
+            color: #2c2b2b;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            color: #4b4a4a !important;
+            background-color: #00ff75 !important;
+            border: none;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            background-color: #00ddeb !important;
+        }
+
+        .navbar {
+            background-color: #1a1a1a;
+        }
+
+        .navbar-brand {
+            color: #00ff75 !important;
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <a class="navbar-brand" href="#">MONITOREO RT CENSO ALUMBRADO</a>
+    </nav>
+
+    <div class="container-fluid">
+        <!-- Map and Side Panel Row -->
+        <div class="map-row">
+            <!-- Map Section -->
+            <div class="map-column">
+                <div id="map"></div>
+                <!-- Map Style Toggle -->
+                <select id="map-style" class="form-control">
+                    <option value="streets">Streets</option>
+                    <option value="satellite">Satellite</option>
+                    <option value="dark">Dark</option>
+                    <option value="light">Light</option>
+                    <option value="outdoors">Outdoors</option>
+                </select>
+            </div>
+
+            <!-- Dashboard Section (Charts) -->
+            <div class="dashboard">
+                <h3>Panel de Control</h3>
+                <div class="graph">
+                    <canvas id="chart1"></canvas>
+                </div>
+                <div class="graph">
+                    <canvas id="chart2"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- DataTable Section for Attended Reports (below the map) -->
+        <div class="datatable-row">
+            <h3>CENSO AL MOMENTO</h3>
+            <table id="attended-reports" class="display" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Reporte</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>LED</td>
+                        <td>70</td>
+                        <td>Completado</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>VAPORSODIO</td>
+                        <td>70</td>
+                        <td>En Proceso</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>LED</td>
+                        <td>100</td>
+                        <td>Completado</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Mapbox GL JS -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.js"></script>
+    <!-- jQuery and Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        // Mapbox Access Token
+        mapboxgl.accessToken = 'pk.eyJ1IjoibWFycXVpbmhvIiwiYSI6ImNsbncydDkzNjA0MDEycWp5Y2hsZzNiZHoifQ.dUzSeWKWWe7R36yohDNb0g';
+
+        // Initialize Main Map with default streets view
+        var map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v11',
+            center: [-100.34497445545134, 25.681418463245766], // Center coordinates
+            zoom: 12,
+            pitch: 60, // Adds tilt for 3D perspective
+            bearing: -17.6 // Rotates the map
+        });
+
+        // Toggle map styles
+        document.getElementById('map-style').addEventListener('change', function() {
+            var style = this.value;
+            var mapStyles = {
+                streets: 'mapbox://styles/mapbox/streets-v11',
+                satellite: 'mapbox://styles/mapbox/satellite-v9',
+                dark: 'mapbox://styles/mapbox/dark-v10',
+                light: 'mapbox://styles/mapbox/light-v10',
+                outdoors: 'mapbox://styles/mapbox/outdoors-v11'
+            };
+            map.setStyle(mapStyles[style]);
+        });
+
+        // Add 3D buildings after the map loads
+        map.on('load', function() {
+            // Insert the layer beneath any symbol layer
+            var layers = map.getStyle().layers;
+
+            var labelLayerId;
+            for (var i = 0; i < layers.length; i++) {
+                if (layers[i].type === 'symbol' && layers[i].layout['text-field']) {
+                    labelLayerId = layers[i].id;
+                    break;
+                }
+            }
+
+            // Add 3D buildings
+            map.addLayer({
+                'id': '3d-buildings',
+                'source': 'composite',
+                'source-layer': 'building',
+                'filter': ['==', 'extrude', 'true'],
+                'type': 'fill-extrusion',
+                'minzoom': 15,
+                'paint': {
+                    'fill-extrusion-color': '#aaa',
+                    'fill-extrusion-height': [
+                        'interpolate', ['linear'], ['zoom'],
+                        15, 0,
+                        15.05, ['get', 'height']
+                    ],
+                    'fill-extrusion-base': [
+                        'interpolate', ['linear'], ['zoom'],
+                        15, 0,
+                        15.05, ['get', 'min_height']
+                    ],
+                    'fill-extrusion-opacity': 0.6
+                }
+            }, labelLayerId);
+        });
+
+        // Add five markers to the map simulating reports
+        var reports = [
+            { location: [-100.344974, 25.681418], type: 'LED' },
+            { location: [-100.348, 25.685], type: 'LED' },
+            { location: [-100.341, 25.682], type: 'VAPORSODIO' },
+            { location: [-100.350, 25.683], type: 'LED' },
+            { location: [-100.345, 25.684], type: 'LED' }
+        ];
+
+        reports.forEach(function(report) {
+            var marker = new mapboxgl.Marker({ color: '#FF0000' })
+                .setLngLat(report.location)
+                .setPopup(new mapboxgl.Popup().setText(report.type)) // Add popups
+                .addTo(map);
+        });
+
+        // Chart.js Example: Graphs for the dashboard
+        var ctx1 = document.getElementById('chart1').getContext('2d');
+        var ctx2 = document.getElementById('chart2').getContext('2d');
+
+        var chart1 = new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: ['Baches', 'Lámparas', 'Señales'],
+                datasets: [{
+                    label: 'Reporte por Tipo',
+                    data: [12, 19, 3],
+                    backgroundColor: ['#00ff75', '#74b9ff', '#55efc4']
+                }]
+            }
+        });
+
+        var chart2 = new Chart(ctx2, {
+            type: 'line',
+            data: {
+                labels: ['Enero', 'Febrero', 'Marzo', 'Abril'],
+                datasets: [{
+                    label: 'Reportes Mensuales',
+                    data: [10, 15, 9, 20],
+                    borderColor: '#00ff75',
+                    fill: false
+                }]
+            }
+        });
+
+        // Initialize DataTable for attended reports
+        $(document).ready(function() {
+            $('#attended-reports').DataTable({
+                scrollY: 200,
+                scrollCollapse: true
+            });
+        });
+    </script>
+</body>
+</html>

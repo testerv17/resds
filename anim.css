@@ -1,0 +1,52 @@
+body {
+    margin: 0;
+    padding: 0;
+    background: #000;
+    color: white;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+#park {
+    width: 80vw;
+    height: 80vh;
+    background: linear-gradient(to bottom, #1a1a1a, #0a1a0a); /* Dark green to simulate grass at night */
+    position: relative;
+}
+
+.street-light {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+}
+
+.pole {
+    width: 10px;
+    height: 100px;
+    background: #808080; /* Metal color */
+    margin: 0 auto;
+    border-radius: 5px;
+}
+
+.lights {
+    display: flex;
+    justify-content: space-between;
+    margin-left: 15px;
+    margin-top: -20px;
+}
+
+.light {
+    width: 20px;
+    height: 10px;
+    background: #FFD700; /* Light color */
+    animation: blink 3s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+}
