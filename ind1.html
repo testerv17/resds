@@ -138,14 +138,13 @@
         table.clear();
         snapshot.forEach(child => {
           const m = child.val();
-          const validado = m.validado_comercio ? 'Validado' : 'Pendiente';
           table.row.add([
-            m.num_manif || '',
-            m.nombre_generador || '',
-            m.folio_cliente || '',
-            m.status || '',
-            validado,
-            m.timestamp_emision || ''
+            m?.num_manif || '',
+            m?.nombre_generador || '',
+            m?.folio_cliente || '',
+            m?.status || '',
+            m?.validado_comercio ? 'Validado' : 'Pendiente',
+            m?.timestamp_emision || ''
           ]);
         });
         table.draw();
@@ -161,4 +160,3 @@
   </script>
 </body>
 </html>
-
