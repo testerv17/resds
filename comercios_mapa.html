@@ -111,6 +111,12 @@
           const lat = parseFloat(row.latitud);
           const lng = parseFloat(row.longitud);
           if (!isNaN(lat) && !isNaN(lng)) {
+            const el = document.createElement('div');
+el.className = 'custom-marker';
+el.style.backgroundImage = 'url(waste.png)';
+el.style.width = '32px';
+el.style.height = '32px';
+el.style.backgroundSize = 'cover';
             new mapboxgl.Marker({ color: '#00a8ff' })
               .setLngLat([lng, lat])
               .setPopup(new mapboxgl.Popup().setHTML(`
