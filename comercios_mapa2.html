@@ -1,0 +1,248 @@
+<!-- INICIO archivo comercios_mapa2.html modificado -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mapa de Comercios</title>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.css" rel="stylesheet" />
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f2f4f8;
+      margin: 0;
+    }
+    .navbar {
+      background-color: #0057b7;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    .navbar-brand {
+      color: #ffffff !important;
+      font-weight: 500;
+      font-size: 1rem;
+    }
+    #map {
+      width: 100%;
+      height: calc(100vh - 60px);
+    }
+    #map-style {
+      position: absolute;
+      top: 70px;
+      right: 20px;
+      z-index: 10;
+      width: 160px;
+      padding: 6px;
+      border: 2px solid #00bfff;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      background: white;
+      color: #003f88;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .custom-marker {
+      background-image: url('waste.png');
+      background-size: cover;
+      background-position: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+      cursor: pointer;
+      border: 2px solid #ffffff;
+    }
+    .mapboxgl-popup-content {
+      background: #ffffff;
+      color: #003f88;
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px;
+      border-radius: 10px;
+      padding: 10px 14px;
+      box-shadow: 0 0 10px rgba(0, 87, 183, 0.15);
+      animation: fadeInPopup 0.3s ease-in-out;
+    }
+    .mapboxgl-popup-content h6 {
+      color: #0057b7;
+      font-size: 15px;
+      margin-bottom: 5px;
+    }
+    .mapboxgl-popup-tip {
+      border-top-color: #ffffff;
+    }
+    @keyframes fadeInPopup {
+      0% { transform: scale(0.9); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar navbar-dark">
+    <a class="navbar-brand" href="total.html">⬅️ Volver al Panel — COMERCIOS REGISTRADOS</a>
+  </nav>
+
+  <select id="map-style" class="form-control">
+    <option value="streets">Streets</option>
+    <option value="satellite">Satellite</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+    <option value="outdoors">Outdoors</option>
+  </select>
+
+  <div id="map"></div>
+
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      databaseURL: "https://orientetotal-d7de4-default-rtdb.firebaseio.com"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+  </script>
+
+  <script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoibWFycXVpbmhvIiwiYSI6ImNsbncydDkzNjA0MDEycWp5Y2hsZzNiZHoifQ.dUzSeWKWWe7R36yohDNb0g';
+
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/streets-v11',
+      center: [-100.34, 25.67],
+      zoom: 11
+    });
+
+    document.getElementById('map-style').addEventListener('change', function () {
+      const styles = {
+        streets: 'mapbox://styles/mapbox/streets-v11',
+        satellite: 'mapbox://styles/mapbox/satellite-v9',
+        light: 'mapbox://styles/mapbox/light-v10',
+        dark: 'mapbox://styles/mapbox/dark-v10',
+        outdoors: 'mapbox://styles/mapbox/outdoors-v11'
+      };
+      map.setStyle(styles[this.value]);
+    });
+
+    map.on('load', () => {
+      // Capa edificios
+      const layers = map.getStyle().layers;
+      let labelLayerId;
+      for (let i = 0; i < layers.length; i++) {
+        if (layers[i].type === 'symbol' && layers[i].layout['text-field']) {
+          labelLayerId = layers[i].id;
+          break;
+        }
+      }
+
+      map.addLayer({
+        id: '3d-buildings',
+        source: 'composite',
+        'source-layer': 'building',
+        filter: ['==', 'extrude', 'true'],
+        type: 'fill-extrusion',
+        minzoom: 15,
+        paint: {
+          'fill-extrusion-color': '#aaa',
+          'fill-extrusion-height': ['interpolate', ['linear'], ['zoom'], 15, 0, 15.05, ['get', 'height']],
+          'fill-extrusion-base': ['interpolate', ['linear'], ['zoom'], 15, 0, 15.05, ['get', 'min_height']],
+          'fill-extrusion-opacity': 0.6
+        }
+      }, labelLayerId);
+
+      // 🔽 Cargar manifiestos agrupados por cliente
+      db.ref("comercio_manifiestoedit").once("value", snapshot => {
+        const manifiestosPorCliente = {};
+
+        snapshot.forEach(child => {
+          const data = child.val();
+          const folio = data.folio_cliente;
+          if (!folio) return;
+
+          if (!manifiestosPorCliente[folio]) {
+            manifiestosPorCliente[folio] = [];
+          }
+          manifiestosPorCliente[folio].push(data);
+        });
+
+        Object.entries(manifiestosPorCliente).forEach(([folio, lista]) => {
+          const listaOrdenada = lista.sort((a, b) => {
+            const fechaA = new Date(a.timestamp_edicion || '');
+            const fechaB = new Date(b.timestamp_edicion || '');
+            return fechaB - fechaA;
+          });
+
+          const ultimo = listaOrdenada[0];
+          const lat = parseFloat(ultimo.latitud);
+          const lng = parseFloat(ultimo.longitud);
+          const nombre = ultimo.nombre_generador || 'Comercio sin nombre';
+
+          if (!isNaN(lat) && !isNaN(lng)) {
+            const el = document.createElement('div');
+            el.style.backgroundImage = "url('waste2.png')";
+            el.style.backgroundSize = "cover";
+            el.style.width = "30px";
+            el.style.height = "30px";
+            el.style.borderRadius = "50%";
+            el.style.border = "2px solid white";
+            el.style.boxShadow = "0 0 6px rgba(0,0,0,0.3)";
+            el.style.cursor = "pointer";
+
+            const tabla = listaOrdenada.map(m =>
+              `<tr><td style="padding:6px;">${m.num_manifiesto || '-'}</td><td style="padding:6px;">${m.timestamp_edicion || '-'}</td></tr>`
+            ).join('');
+
+            const popupHtml = `
+              <div style="font-family:Poppins,sans-serif;">
+                <h6 style="color:#0057b7; font-size:15px; margin-bottom:5px;">${nombre}</h6>
+                <div style="font-size:13px; color:#444; margin-bottom:5px;"><strong>Folio:</strong> ${folio}</div>
+                <table style="width:100%; font-size:12px; border-collapse:collapse; border:1px solid #ddd;">
+                  <thead>
+                    <tr style="background:#e3f2fd;">
+                      <th style="padding:6px;">Manifiesto</th>
+                      <th style="padding:6px;">Fecha edición</th>
+                    </tr>
+                  </thead>
+                  <tbody>${tabla}</tbody>
+                </table>
+              </div>`;
+
+            new mapboxgl.Marker(el)
+              .setLngLat([lng, lat])
+              .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(popupHtml))
+              .addTo(map);
+          }
+        });
+      });
+    });
+
+    // 🔽 Cargar ubicaciones desde CSV
+    Papa.parse("data/comerciosgeos.csv", {
+      download: true,
+      header: true,
+      complete: function(results) {
+        results.data.forEach(row => {
+          const lat = parseFloat(row.latitud);
+          const lng = parseFloat(row.longitud);
+          if (!isNaN(lat) && !isNaN(lng)) {
+            const el = document.createElement('div');
+            el.className = 'custom-marker';
+            new mapboxgl.Marker(el)
+              .setLngLat([lng, lat])
+              .setPopup(new mapboxgl.Popup().setHTML(`
+                <div>
+                  <h6>${row.comercio || 'Sin nombre'}</h6>
+                  <div><strong>Giro:</strong> ${row.giro || '-'}</div>
+                  <div><strong>Ubicación:</strong><br>${lat.toFixed(5)}, ${lng.toFixed(5)}</div>
+                </div>
+              `))
+              .addTo(map);
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>
