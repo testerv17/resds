@@ -1,44 +1,44 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mapa de Comercios</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.css" rel="stylesheet">
-  <script src="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.css" rel="stylesheet" />
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
   <style>
     body {
-      margin: 0;
       font-family: 'Poppins', sans-serif;
-      background: #f2f5fc;
-      color: #003f88;
+      background-color: #f2f4f8;
+      margin: 0;
     }
 
-    header {
+    .navbar {
       background-color: #0057b7;
-      color: white;
-      padding: 15px 25px;
-      font-size: 20px;
-      font-weight: 600;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     }
 
-    #mapComercios {
+    .navbar-brand {
+      color: #ffffff !important;
+      font-weight: 500;
+      font-size: 1rem;
+    }
+
+    #map {
       width: 100%;
-      height: 90vh;
+      height: calc(100vh - 60px);
     }
 
     #map-style {
       position: absolute;
-      top: 80px;
-      right: 30px;
-      z-index: 5;
+      top: 70px;
+      right: 20px;
+      z-index: 10;
       width: 160px;
+      padding: 6px;
       border: 2px solid #00bfff;
       border-radius: 6px;
-      padding: 5px;
-      font-size: 14px;
+      font-size: 0.9rem;
       background: white;
       color: #003f88;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
@@ -47,58 +47,49 @@
     .custom-marker {
       background-image: url('waste.png');
       background-size: cover;
+      background-position: center;
       width: 32px;
       height: 32px;
       border-radius: 50%;
       box-shadow: 0 0 5px rgba(0,0,0,0.3);
       cursor: pointer;
-    }
-
-    .mapboxgl-popup {
-      max-width: 280px !important;
-      font-size: 13px;
-      font-family: 'Poppins', sans-serif;
+      border: 2px solid #ffffff;
     }
 
     .mapboxgl-popup-content {
-      padding: 10px 15px;
-      border-radius: 8px;
-      box-shadow: 0 6px 12px rgba(0,0,0,0.1);
       background: #ffffff;
-      border-top: 4px solid #0057b7;
+      color: #003f88;
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px;
+      border-radius: 10px;
+      padding: 10px 14px;
+      box-shadow: 0 0 10px rgba(0, 87, 183, 0.15);
+      animation: fadeInPopup 0.3s ease-in-out;
     }
 
-    .mapboxgl-popup-content strong {
+    .mapboxgl-popup-content h6 {
       color: #0057b7;
       font-size: 15px;
+      margin-bottom: 5px;
     }
 
-    .mapboxgl-popup-content br {
-      margin-bottom: 4px;
+    .mapboxgl-popup-tip {
+      border-top-color: #ffffff;
+    }
+
+    @keyframes fadeInPopup {
+      0% { transform: scale(0.9); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
     }
   </style>
 </head>
 <body>
 
-  <header>🗺️ Mapa Interactivo de Comercios </header>
-  <div style="padding: 10px 25px;">
-  <a href="total.html" style="
-    display: inline-block;
-    background-color: #0057b7;
-    color: #fff;
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-weight: 500;
-    text-decoration: none;
-    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
-    transition: background 0.3s ease;
-  " onmouseover="this.style.backgroundColor='#0040a0'" onmouseout="this.style.backgroundColor='#0057b7'">
-    ⬅️ Volver al Panel
-  </a>
-</div>
+  <nav class="navbar navbar-dark">
+    <a class="navbar-brand" href="total.html">⬅️ Volver al Panel — COMERCIOS REGISTRADOS</a>
+  </nav>
 
-
-  <select id="map-style">
+  <select id="map-style" class="form-control">
     <option value="streets">Streets</option>
     <option value="satellite">Satellite</option>
     <option value="light">Light</option>
@@ -106,13 +97,15 @@
     <option value="outdoors">Outdoors</option>
   </select>
 
-  <div id="mapComercios"></div>
+  <div id="map"></div>
 
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
   <script>
-    mapboxgl.accessToken = 'pk.eyJ1IjoiZXZlcm1hcGJveCIsImEiOiJjbG0xN2t0eWswM21jM3Bxem92ZWVmeGRjIn0.XAG_wb8mFhzDNnR9E65wuw';
+    mapboxgl.accessToken = 'pk.eyJ1IjoibWFycXVpbmhvIiwiYSI6ImNsbncydDkzNjA0MDEycWp5Y2hsZzNiZHoifQ.dUzSeWKWWe7R36yohDNb0g';
 
     const map = new mapboxgl.Map({
-      container: 'mapComercios',
+      container: 'map',
       style: 'mapbox://styles/mapbox/streets-v11',
       center: [-100.34, 25.67],
       zoom: 11
@@ -129,6 +122,33 @@
       map.setStyle(styles[this.value]);
     });
 
+    map.on('load', () => {
+      const layers = map.getStyle().layers;
+      let labelLayerId;
+      for (let i = 0; i < layers.length; i++) {
+        if (layers[i].type === 'symbol' && layers[i].layout['text-field']) {
+          labelLayerId = layers[i].id;
+          break;
+        }
+      }
+
+      map.addLayer({
+        id: '3d-buildings',
+        source: 'composite',
+        'source-layer': 'building',
+        filter: ['==', 'extrude', 'true'],
+        type: 'fill-extrusion',
+        minzoom: 15,
+        paint: {
+          'fill-extrusion-color': '#aaa',
+          'fill-extrusion-height': ['interpolate', ['linear'], ['zoom'], 15, 0, 15.05, ['get', 'height']],
+          'fill-extrusion-base': ['interpolate', ['linear'], ['zoom'], 15, 0, 15.05, ['get', 'min_height']],
+          'fill-extrusion-opacity': 0.6
+        }
+      }, labelLayerId);
+    });
+
+    // Cargar ubicaciones del CSV
     Papa.parse("data/comerciosgeos.csv", {
       download: true,
       header: true,
@@ -143,10 +163,11 @@
             new mapboxgl.Marker(el)
               .setLngLat([lng, lat])
               .setPopup(new mapboxgl.Popup().setHTML(`
-                <strong>${row.comercio || 'Sin nombre'}</strong><br>
-                Giro: ${row.giro || '-'}<br>
-                Lat: ${lat.toFixed(6)}<br>
-                Lng: ${lng.toFixed(6)}
+                <div>
+                  <h6>${row.comercio || 'Sin nombre'}</h6>
+                  <div><strong>Giro:</strong> ${row.giro || '-'}</div>
+                  <div><strong>Ubicación:</strong><br> ${lat.toFixed(5)}, ${lng.toFixed(5)}</div>
+                </div>
               `))
               .addTo(map);
           }
@@ -154,6 +175,7 @@
       }
     });
   </script>
+
 </body>
 </html>
 
