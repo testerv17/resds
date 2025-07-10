@@ -406,7 +406,7 @@
         <strong>Fecha:</strong> ${s.timestamp}<br>
         <strong>Status:</strong> ${s.status_solicitud}<br>
         <strong>Residuos:</strong>
-        <table class='table table-sm'><thead><tr><th>Tipo</th><th>Cantidad</th><th>Capacidad</th></tr></thead><tbody>`;
+        <table class='table table-sm table-primary'><thead><tr><th>Tipo</th><th>Cantidad</th><th>Capacidad</th></tr></thead><tbody>`;
         s.residuos.forEach(r => {
           html += `<tr><td>${r.tipo_residuo}</td><td>${r.cantidad}</td><td>${r.capacidad}</td></tr>`;
         });
