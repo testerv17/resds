@@ -528,7 +528,8 @@ function exportarPDFdesdeModal() {
   }
 
   const htmlOriginal = vista.innerHTML;
-  const htmlMejorado = `
+
+  const htmlEstilizado = `
     <style>
       * { font-family: Arial, sans-serif; }
       .header-logo {
@@ -542,7 +543,7 @@ function exportarPDFdesdeModal() {
       }
       h2 {
         color: #0057b7;
-        margin-bottom: 10px;
+        margin: 0;
       }
       .info p {
         margin: 4px 0;
@@ -590,18 +591,18 @@ function exportarPDFdesdeModal() {
     </div>
   `;
 
-  const divTemporal = document.createElement('div');
-  divTemporal.innerHTML = htmlMejorado;
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = htmlEstilizado;
 
-  // Aplicar separador de miles manualmente
-  divTemporal.querySelectorAll("td").forEach(td => {
-    const num = parseFloat(td.textContent);
+  // Formatear los números con separadores de miles
+  wrapper.querySelectorAll("td").forEach(td => {
+    const num = parseFloat(td.textContent.replace(/,/g, ""));
     if (!isNaN(num) && num > 999) {
       td.textContent = num.toLocaleString('en-US');
     }
   });
 
-  document.body.appendChild(divTemporal);
+  document.body.appendChild(wrapper);
 
   html2pdf().set({
     margin: 0.5,
@@ -609,8 +610,8 @@ function exportarPDFdesdeModal() {
     image: { type: 'jpeg', quality: 0.98 },
     html2canvas: { scale: 2 },
     jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-  }).from(divTemporal).save().then(() => {
-    document.body.removeChild(divTemporal);
+  }).from(wrapper).save().then(() => {
+    document.body.removeChild(wrapper);
   });
 }
 
