@@ -527,13 +527,14 @@ function exportarPDFdesdeModal() {
     return;
   }
 
-  const contenido = `
+  const htmlOriginal = vista.innerHTML;
+  const htmlMejorado = `
     <style>
       * { font-family: Arial, sans-serif; }
       .header-logo {
         display: flex;
         align-items: center;
-        margin-bottom: 15px;
+        margin-bottom: 20px;
       }
       .header-logo img {
         height: 60px;
@@ -543,41 +544,45 @@ function exportarPDFdesdeModal() {
         color: #0057b7;
         margin-bottom: 10px;
       }
-      .table-resumen {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 15px;
-      }
-      .table-resumen th, .table-resumen td {
-        border: 1px solid #ccc;
-        padding: 8px;
-        text-align: center;
+      .info p {
+        margin: 4px 0;
         font-size: 14px;
       }
-      .table-resumen th {
-        background-color: #e6f3ff;
-        color: #003f88;
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      th, td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        font-size: 13px;
+        text-align: center;
+      }
+      th {
+        background-color: #0057b7;
+        color: white;
       }
       .firmas {
-        margin-top: 40px;
+        margin-top: 50px;
         display: flex;
         justify-content: space-between;
       }
       .firmas div {
         width: 45%;
         text-align: center;
+        padding-top: 10px;
         border-top: 1px solid #333;
-        padding-top: 5px;
         font-size: 14px;
       }
     </style>
 
-    <div>
+    <div style="padding: 30px;">
       <div class="header-logo">
         <img src="logo2.png" alt="Logo" />
         <h2>Reporte de Solicitud de Servicio</h2>
       </div>
-      ${vista.innerHTML}
+      <div class="info">${htmlOriginal}</div>
       <div class="firmas">
         <div>Firma Encargado de Planta</div>
         <div>Firma del Recolector</div>
@@ -585,12 +590,18 @@ function exportarPDFdesdeModal() {
     </div>
   `;
 
-  // Reemplazar comas en cantidades numéricas
-  const parseNumerosMiles = contenido.replace(/\b(\d{1,3})(?=(\d{3})+(?!\d))/g, '$1,');
+  const divTemporal = document.createElement('div');
+  divTemporal.innerHTML = htmlMejorado;
 
-  const pdfArea = document.createElement('div');
-  pdfArea.innerHTML = parseNumerosMiles;
-  document.body.appendChild(pdfArea);
+  // Aplicar separador de miles manualmente
+  divTemporal.querySelectorAll("td").forEach(td => {
+    const num = parseFloat(td.textContent);
+    if (!isNaN(num) && num > 999) {
+      td.textContent = num.toLocaleString('en-US');
+    }
+  });
+
+  document.body.appendChild(divTemporal);
 
   html2pdf().set({
     margin: 0.5,
@@ -598,8 +609,8 @@ function exportarPDFdesdeModal() {
     image: { type: 'jpeg', quality: 0.98 },
     html2canvas: { scale: 2 },
     jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-  }).from(pdfArea).save().then(() => {
-    document.body.removeChild(pdfArea);
+  }).from(divTemporal).save().then(() => {
+    document.body.removeChild(divTemporal);
   });
 }
 
