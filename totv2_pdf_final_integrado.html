@@ -527,32 +527,36 @@ function exportarPDFdesdeModal() {
     return;
   }
 
-  const datosHTML = vista.innerHTML;
-
-  const contenidoPDF = `
+  const htmlOriginal = vista.innerHTML;
+  const htmlMejorado = `
     <style>
-      body { font-family: Arial, sans-serif; font-size: 13px; }
-      h2 { color: #0057b7; }
-      .logo-container {
+      * { font-family: Arial, sans-serif; }
+      .header-logo {
         display: flex;
         align-items: center;
         margin-bottom: 20px;
       }
-      .logo-container img {
+      .header-logo img {
         height: 60px;
         margin-right: 15px;
       }
-      .resumen {
-        margin-bottom: 20px;
+      h2 {
+        color: #0057b7;
+        margin-bottom: 10px;
+      }
+      .info p {
+        margin: 4px 0;
+        font-size: 14px;
       }
       table {
         width: 100%;
         border-collapse: collapse;
-        margin-top: 10px;
+        margin-top: 20px;
       }
       th, td {
         border: 1px solid #ccc;
         padding: 8px;
+        font-size: 13px;
         text-align: center;
       }
       th {
@@ -567,35 +571,37 @@ function exportarPDFdesdeModal() {
       .firmas div {
         width: 45%;
         text-align: center;
-        border-top: 1px solid #000;
         padding-top: 10px;
+        border-top: 1px solid #333;
+        font-size: 14px;
       }
     </style>
 
-    <div class="logo-container">
-      <img src="logo2.png" alt="Logo">
-      <h2>Reporte de Solicitud de Servicio</h2>
-    </div>
-
-    <div class="resumen">${datosHTML}</div>
-
-    <div class="firmas">
-      <div>Firma Encargado de Planta</div>
-      <div>Firma del Recolector</div>
+    <div style="padding: 30px;">
+      <div class="header-logo">
+        <img src="logo2.png" alt="Logo" />
+        <h2>Reporte de Solicitud de Servicio</h2>
+      </div>
+      <div class="info">${htmlOriginal}</div>
+      <div class="firmas">
+        <div>Firma Encargado de Planta</div>
+        <div>Firma del Recolector</div>
+      </div>
     </div>
   `;
 
-  const exportDiv = document.getElementById("pdfExportTemp");
-  exportDiv.innerHTML = contenidoPDF;
-  exportDiv.style.display = "block";
+  const divTemporal = document.createElement('div');
+  divTemporal.innerHTML = htmlMejorado;
 
-  // Formatear los números con separadores de miles
-  exportDiv.querySelectorAll("td").forEach(td => {
-    const num = parseFloat(td.innerText);
+  // Aplicar separador de miles manualmente
+  divTemporal.querySelectorAll("td").forEach(td => {
+    const num = parseFloat(td.textContent);
     if (!isNaN(num) && num > 999) {
-      td.innerText = num.toLocaleString('es-MX');
+      td.textContent = num.toLocaleString('en-US');
     }
   });
+
+  document.body.appendChild(divTemporal);
 
   html2pdf().set({
     margin: 0.5,
@@ -603,10 +609,12 @@ function exportarPDFdesdeModal() {
     image: { type: 'jpeg', quality: 0.98 },
     html2canvas: { scale: 2 },
     jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-  }).from(exportDiv).save().then(() => {
-    exportDiv.style.display = "none";
+  }).from(divTemporal).save().then(() => {
+    document.body.removeChild(divTemporal);
   });
 }
+
+
     function renderTablaResumen(data) {
       const tabla = $('#tablaResumen').DataTable();
       tabla.clear();
@@ -650,6 +658,69 @@ document.getElementById('totalCapacidad').innerHTML = `<strong>${totalCapacidad.
 
     });
   </script>
+<!-- jQuery primero -->
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<!-- Bootstrap JS -->
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<!-- DataTables -->
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
+<script>
+function exportarPDFdesdeModal() {
+  const vista = document.getElementById("vistaSolicitudPDF");
+  if (!vista) {
+    alert("Vista previa no encontrada.");
+    return;
+  }
+
+  const contenido = `
+    <style>
+      * { font-family: Arial, sans-serif; }
+      h2 { color: #0057b7; margin-bottom: 10px; }
+      .header-logo { display: flex; align-items: center; margin-bottom: 15px; }
+      .header-logo img { height: 50px; margin-right: 15px; }
+      .table-resumen {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+      }
+      .table-resumen th, .table-resumen td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        text-align: center;
+      }
+      .table-resumen th {
+        background-color: #e6f3ff;
+        color: #003f88;
+      }
+    </style>
+    <div>
+      <div class="header-logo">
+        <img src='logo2.png' alt='Logo'>
+        <h2>Reporte de Solicitud de Servicio</h2>
+      </div>
+      ${vista.innerHTML}
+    </div>
+  `;
+
+  const pdfArea = document.createElement('div');
+  pdfArea.innerHTML = contenido;
+  document.body.appendChild(pdfArea);
+
+  html2pdf().set({
+    margin: 0.5,
+    filename: 'Solicitud_Servicio.pdf',
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+  }).from(pdfArea).save().then(() => {
+    document.body.removeChild(pdfArea);
+  });
+}
+</script>
 </body>
 </html>
