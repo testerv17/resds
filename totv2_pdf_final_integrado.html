@@ -527,78 +527,86 @@ function exportarPDFdesdeModal() {
     return;
   }
 
-  const contenidoOriginal = vista.cloneNode(true);
+  const datosHTML = vista.innerHTML;
 
-  // Formatear números con separador de miles
-  contenidoOriginal.querySelectorAll("td").forEach(td => {
-    const texto = td.textContent.trim();
-    const numero = parseFloat(texto);
-    if (!isNaN(numero)) {
-      td.textContent = numero.toLocaleString('es-MX');
-    }
-  });
+  const contenidoPDF = `
+    <style>
+      body { font-family: Arial, sans-serif; font-size: 13px; }
+      h2 { color: #0057b7; }
+      .logo-container {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      .logo-container img {
+        height: 60px;
+        margin-right: 15px;
+      }
+      .resumen {
+        margin-bottom: 20px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+      }
+      th, td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        text-align: center;
+      }
+      th {
+        background-color: #0057b7;
+        color: white;
+      }
+      .firmas {
+        margin-top: 50px;
+        display: flex;
+        justify-content: space-between;
+      }
+      .firmas div {
+        width: 45%;
+        text-align: center;
+        border-top: 1px solid #000;
+        padding-top: 10px;
+      }
+    </style>
 
-  const htmlFinal = `
-    <div style="font-family: Arial, sans-serif; padding: 20px; width: 100%;">
-      <div style="display: flex; align-items: center; margin-bottom: 15px;">
-        <img src="logo2.png" alt="Logo" style="height: 60px; margin-right: 15px;">
-        <h2 style="color: #0057b7; margin: 0;">Reporte de Solicitud de Servicio</h2>
-      </div>
+    <div class="logo-container">
+      <img src="logo2.png" alt="Logo">
+      <h2>Reporte de Solicitud de Servicio</h2>
+    </div>
 
-      <div style="font-size: 14px; margin-bottom: 10px;">
-        ${contenidoOriginal.innerHTML}
-      </div>
+    <div class="resumen">${datosHTML}</div>
 
-      <div style="margin-top: 30px;">
-        <table style="width: 100%; border-collapse: collapse;">
-          <thead>
-            <tr style="background-color: #0057b7; color: white;">
-              <th style="border: 1px solid #ccc; padding: 8px;">Tipo</th>
-              <th style="border: 1px solid #ccc; padding: 8px;">Cantidad</th>
-              <th style="border: 1px solid #ccc; padding: 8px;">Capacidad</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${Array.from(contenidoOriginal.querySelectorAll("table tbody tr")).map(tr => {
-              const tds = tr.querySelectorAll("td");
-              return `
-                <tr>
-                  <td style="border: 1px solid #ccc; padding: 8px;">${tds[0]?.textContent || ''}</td>
-                  <td style="border: 1px solid #ccc; padding: 8px;">${tds[1]?.textContent || ''}</td>
-                  <td style="border: 1px solid #ccc; padding: 8px;">${tds[2]?.textContent || ''}</td>
-                </tr>
-              `;
-            }).join('')}
-          </tbody>
-        </table>
-      </div>
-
-      <div style="margin-top: 50px; display: flex; justify-content: space-between;">
-        <div style="width: 45%; text-align: center; border-top: 1px solid #000; padding-top: 10px;">
-          Firma Encargado de Planta
-        </div>
-        <div style="width: 45%; text-align: center; border-top: 1px solid #000; padding-top: 10px;">
-          Firma del Recolector
-        </div>
-      </div>
+    <div class="firmas">
+      <div>Firma Encargado de Planta</div>
+      <div>Firma del Recolector</div>
     </div>
   `;
 
-  const divTemp = document.createElement("div");
-  divTemp.innerHTML = htmlFinal;
-  document.body.appendChild(divTemp);
+  const exportDiv = document.getElementById("pdfExportTemp");
+  exportDiv.innerHTML = contenidoPDF;
+  exportDiv.style.display = "block";
+
+  // Formatear los números con separadores de miles
+  exportDiv.querySelectorAll("td").forEach(td => {
+    const num = parseFloat(td.innerText);
+    if (!isNaN(num) && num > 999) {
+      td.innerText = num.toLocaleString('es-MX');
+    }
+  });
 
   html2pdf().set({
     margin: 0.5,
-    filename: "Solicitud_Servicio.pdf",
-    image: { type: "jpeg", quality: 0.98 },
+    filename: 'Solicitud_Servicio.pdf',
+    image: { type: 'jpeg', quality: 0.98 },
     html2canvas: { scale: 2 },
-    jsPDF: { unit: "in", format: "letter", orientation: "portrait" }
-  }).from(divTemp).save().then(() => {
-    document.body.removeChild(divTemp);
+    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+  }).from(exportDiv).save().then(() => {
+    exportDiv.style.display = "none";
   });
 }
-
     function renderTablaResumen(data) {
       const tabla = $('#tablaResumen').DataTable();
       tabla.clear();
@@ -642,69 +650,6 @@ document.getElementById('totalCapacidad').innerHTML = `<strong>${totalCapacidad.
 
     });
   </script>
-<!-- jQuery primero -->
-<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-<!-- Bootstrap JS -->
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-<!-- DataTables -->
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-<script>
-function exportarPDFdesdeModal() {
-  const vista = document.getElementById("vistaSolicitudPDF");
-  if (!vista) {
-    alert("Vista previa no encontrada.");
-    return;
-  }
-
-  const contenido = `
-    <style>
-      * { font-family: Arial, sans-serif; }
-      h2 { color: #0057b7; margin-bottom: 10px; }
-      .header-logo { display: flex; align-items: center; margin-bottom: 15px; }
-      .header-logo img { height: 50px; margin-right: 15px; }
-      .table-resumen {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 10px;
-      }
-      .table-resumen th, .table-resumen td {
-        border: 1px solid #ccc;
-        padding: 8px;
-        text-align: center;
-      }
-      .table-resumen th {
-        background-color: #e6f3ff;
-        color: #003f88;
-      }
-    </style>
-    <div>
-      <div class="header-logo">
-        <img src='logo2.png' alt='Logo'>
-        <h2>Reporte de Solicitud de Servicio</h2>
-      </div>
-      ${vista.innerHTML}
-    </div>
-  `;
-
-  const pdfArea = document.createElement('div');
-  pdfArea.innerHTML = contenido;
-  document.body.appendChild(pdfArea);
-
-  html2pdf().set({
-    margin: 0.5,
-    filename: 'Solicitud_Servicio.pdf',
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2 },
-    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-  }).from(pdfArea).save().then(() => {
-    document.body.removeChild(pdfArea);
-  });
-}
-</script>
 </body>
 </html>
