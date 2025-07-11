@@ -520,91 +520,7 @@ function verSolicitud(id) {
   });
 }
 
-function exportarPDFdesdeModal() {
-  const vista = document.getElementById("vistaSolicitudPDF");
-  if (!vista) {
-    alert("Vista previa no encontrada.");
-    return;
-  }
 
-  const contenido = `
-    <style>
-      * { font-family: Arial, sans-serif; }
-      h2 { color: #0057b7; margin-bottom: 10px; }
-      .header-logo {
-        display: flex;
-        align-items: center;
-        margin-bottom: 15px;
-      }
-      .header-logo img {
-        height: 50px;
-        margin-right: 15px;
-      }
-      .table-resumen {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 15px;
-      }
-      .table-resumen th, .table-resumen td {
-        border: 1px solid #ccc;
-        padding: 8px;
-        text-align: center;
-        font-size: 13px;
-      }
-      .table-resumen th {
-        background-color: #0057b7;
-        color: white;
-      }
-      .firmas {
-        margin-top: 40px;
-        display: flex;
-        justify-content: space-between;
-      }
-      .firmas div {
-        width: 45%;
-        text-align: center;
-        padding-top: 10px;
-        border-top: 1px solid #333;
-        font-size: 14px;
-      }
-    </style>
-
-    <div style="padding: 25px;">
-      <div class="header-logo">
-        <img src="logo2.png" alt="Logo" />
-        <h2>Reporte de Solicitud de Servicio</h2>
-      </div>
-      <div>${vista.innerHTML.replace('table table-bordered table-sm', 'table-resumen')}</div>
-      <div class="firmas">
-        <div>Firma Encargado de Planta</div>
-        <div>Firma del Recolector</div>
-      </div>
-    </div>
-  `;
-
-  const pdfArea = document.createElement('div');
-  pdfArea.innerHTML = contenido;
-
-  // Aplicar separadores de miles
-  pdfArea.querySelectorAll("td").forEach(td => {
-    const val = parseFloat(td.textContent);
-    if (!isNaN(val) && val >= 1000) {
-      td.textContent = val.toLocaleString('es-MX');
-    }
-  });
-
-  document.body.appendChild(pdfArea);
-
-  html2pdf().set({
-    margin: 0.5,
-    filename: 'Solicitud_Servicio.pdf',
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2 },
-    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-  }).from(pdfArea).save().then(() => {
-    document.body.removeChild(pdfArea);
-  });
-}
 
 
     function renderTablaResumen(data) {
@@ -650,6 +566,105 @@ document.getElementById('totalCapacidad').innerHTML = `<strong>${totalCapacidad.
 
     });
   </script>
+
+    <!-- Coloca esta función justo al final del body, antes de cerrar </body> -->
+<script>
+function exportarPDFdesdeModal() {
+  const vista = document.getElementById("vistaSolicitudPDF");
+  if (!vista) {
+    alert("Vista previa no encontrada.");
+    return;
+  }
+
+  const contenido = `
+    <style>
+      * { font-family: Arial, sans-serif; }
+      .header-logo {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      .header-logo img {
+        height: 60px;
+        margin-right: 15px;
+      }
+      h2 {
+        color: #0057b7;
+        margin-bottom: 10px;
+      }
+      .info p {
+        margin: 4px 0;
+        font-size: 14px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      th, td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        font-size: 13px;
+        text-align: center;
+      }
+      th {
+        background-color: #0057b7;
+        color: white;
+      }
+      .firmas {
+        margin-top: 50px;
+        display: flex;
+        justify-content: space-between;
+      }
+      .firmas div {
+        width: 45%;
+        text-align: center;
+        padding-top: 10px;
+        border-top: 1px solid #333;
+        font-size: 14px;
+      }
+    </style>
+
+    <div style="padding: 30px;">
+      <div class="header-logo">
+        <img src="logo2.png" alt="Logo" />
+        <h2>Reporte de Solicitud de Servicio</h2>
+      </div>
+      <div class="info">
+        ${vista.innerHTML}
+      </div>
+      <div class="firmas">
+        <div>Firma Encargado de Planta</div>
+        <div>Firma del Recolector</div>
+      </div>
+    </div>
+  `;
+
+  const divTemporal = document.createElement('div');
+  divTemporal.innerHTML = contenido;
+
+  // Separador de miles
+  divTemporal.querySelectorAll("td").forEach(td => {
+    const num = parseFloat(td.textContent);
+    if (!isNaN(num)) {
+      td.textContent = num.toLocaleString('en-US');
+    }
+  });
+
+  document.body.appendChild(divTemporal);
+
+  html2pdf().set({
+    margin: 0.5,
+    filename: 'Solicitud_Servicio.pdf',
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+  }).from(divTemporal).save().then(() => {
+    document.body.removeChild(divTemporal);
+  });
+}
+</script>
+
 
 </body>
 </html>
